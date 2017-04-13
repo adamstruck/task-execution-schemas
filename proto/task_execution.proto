@@ -349,33 +349,32 @@ message ListTasksRequest {
 
   // OPTIONAL
   //
-  // Filter the task list to include tasks in this project.
-  string project = 1;
-
-  // OPTIONAL
+  // Filter the task list on:
+  //   Task.State
+  //   Task.Tags
   //
-  // Filter the list to include tasks where the name matches this prefix.
-  // If unspecified, no task name filtering is done.
-  string name_prefix	= 2;
+  // The [OData-ABNF] v4.0 filter syntax rule defines the formal grammar of the $filter query option.
+  // Required to support 'eq' and 'and' operations only.
+  string filter = 1;
 
   // OPTIONAL
   //
   // Number of tasks to return in one page.
   // Must be less than 2048. Defaults to 256.
-  uint32 page_size = 3;
+  uint32 page_size = 2;
 
   // OPTIONAL
   //
   // Page token is used to retrieve the next page of results.
   // If unspecified, returns the first page of results.
   // See ListTasksResponse.next_page_token
-  string page_token = 4;
+  string page_token = 3;
 
   // OPTIONAL
   //
   // Affects the fields included in the returned Task messages.
   // See TaskView below.
-  TaskView view = 5;
+  TaskView view = 4;
 }
 
 // TaskView affects the fields returned by the ListTasks endpoint.

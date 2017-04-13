@@ -29,15 +29,8 @@
         },
         "parameters": [
           {
-            "name": "project",
-            "description": "OPTIONAL. Filter the task list to include tasks in this project.",
-            "in": "query",
-            "required": false,
-            "type": "string"
-          },
-          {
-            "name": "name_prefix",
-            "description": "OPTIONAL. Filter the list to include tasks where the name matches this prefix.\nIf unspecified, no task name filtering is done.",
+            "name": "filter",
+            "description": "OPTIONAL. Filter the task list on:\n  Task.State\n  Task.Tags\n\nThe [OData-ABNF] v4.0 filter syntax rule defines the formal grammar of the $filter query option.\nRequired to support 'eq' and 'and' operations only.",
             "in": "query",
             "required": false,
             "type": "string"
@@ -380,14 +373,9 @@
     "tesListTasksRequest": {
       "type": "object",
       "properties": {
-        "project": {
+        "filter": {
           "type": "string",
-          "description": "Filter the task list to include tasks in this project.",
-          "title": "OPTIONAL"
-        },
-        "name_prefix": {
-          "type": "string",
-          "description": "Filter the list to include tasks where the name matches this prefix.\nIf unspecified, no task name filtering is done.",
+          "description": "Filter the task list on:\n  Task.State\n  Task.Tags\n\nThe [OData-ABNF] v4.0 filter syntax rule defines the formal grammar of the $filter query option.\nRequired to support 'eq' and 'and' operations only.",
           "title": "OPTIONAL"
         },
         "page_size": {
