@@ -17,18 +17,6 @@ message Task {
   State state = 2;
 
   // OPTIONAL
-  string name = 3;
-
-  // OPTIONAL
-  //
-  // Describes the project this task is associated with.
-  // Commonly used for billing on cloud providers (AWS, Google Cloud, etc).
-  string project = 4;
-
-  // OPTIONAL
-  string description = 5;
-
-  // OPTIONAL
   //
   // Input files.
   // Inputs will be downloaded and mounted into the executor container.
@@ -54,7 +42,7 @@ message Task {
   //
   // Declared volumes.
   // Volumes are shared between executors. Volumes for inputs and outputs are 
-  // inferred and should not be delcared here.
+  // inferred and should not be declared here.
   repeated string volumes = 10;
 
   // OPTIONAL
@@ -65,31 +53,17 @@ message Task {
   // OUTPUT ONLY
   //
   // Task logging information.
-  // Normally, this will contain only one entry, but in the case where
-  // a task fails and is retried, an entry will be appended to this list.
-  repeated TaskLog logs = 12;
-}
-
-enum FileType {
-  FILE = 0;
-  DIRECTORY = 1;
+  TaskLog logs = 12;
 }
 
 // TaskParameter describes input and output files for a Task.
 message TaskParameter {
-
-  // OPTIONAL
-  string name = 1;
-
-  // OPTIONAL
-  string description = 2;
-
   // REQUIRED
   //
-  // URL in long term storage, for example:
+  // Storage URL, for example:
   // s3://my-object-store/file1
   // gs://my-bucket/file2
-  // file:///path/to/my/file
+  // file:///path/to/my/file3
   // /path/to/my/file
   // etc...
   string url = 3;
@@ -99,17 +73,12 @@ message TaskParameter {
   // Path of the file inside the container.
   string path = 4;
 
-  // REQUIRED
-  //
-  // Type of the file, FILE or DIRECTORY
-  FileType type = 5;
-
   // OPTIONAL
   //
-  // File contents literal. 
+  // File content literal. 
   // Implementations should support a minimum of 128 KiB in this field and may define its own maximum.
   // UTF-8 encoded
-  string contents = 6;
+  string content = 6;
 }
 
 // Ports describes the port mapping between the container and host.
@@ -137,12 +106,12 @@ message Executor {
   // quay.io/aptible/ubuntu
   // gcr.io/my-org/my-image
   // etc...
-  string image_name = 1;
+  string image = 1;
 
   // REQUIRED
   //
   // The command to be executed.
-  repeated string cmd = 2;
+  repeated string command = 2;
 
   // OPTIONAL
   //
@@ -176,7 +145,7 @@ message Executor {
   // OPTIONAL
   //
   // Enviromental variables to set within the container.
-  map<string,string> environ = 8;
+  map<string,string> env = 8;
 }
 
 // Resources describes the resources requested by a task.
@@ -189,23 +158,28 @@ message Resources {
 
   // OPTIONAL
   //
-  // Is the task allowed to run on preemptible compute instances (e.g. AWS Spot)?
-  bool preemptible = 2;
-
-  // OPTIONAL
-  //
   // Requested RAM required in gigabytes (GB)
   double ram_gb = 3;
 
   // OPTIONAL
   //
   // Requested disk size in gigabytes (GB)
-  double size_gb = 4;
+  double disk_gb = 4;
+
+  // OPTIONAL
+  //
+  // Is the task allowed to run on preemptible compute instances (e.g. AWS Spot)?
+  bool preemptible = 2;
 
   // OPTIONAL
   //
   // Request that the task be run in these compute zones.
   repeated string zones = 5;
+
+  // OPTIONAL
+  //
+  // Implementation specific resource requests
+  map<string, string> attributes = 6;
 }
 
 // OUTPUT ONLY
@@ -217,11 +191,6 @@ message TaskLog {
   //
   // Logs for each executor
   repeated ExecutorLog logs = 1;
-
-  // OPTIONAL
-  //
-  // Arbitrary logging metadata included by the implementation.
-  map<string, string> metadata = 2;
 
   // OPTIONAL
   //
@@ -238,6 +207,11 @@ message TaskLog {
   // Information about all output files. Directory outputs are
   // flattened into separate items.
   repeated OutputFileLog outputs = 5;
+
+  // OPTIONAL
+  //
+  // Optional system logs.
+  repeated string syslogs = 6;
 }
 
 // OUTPUT ONLY
@@ -257,16 +231,14 @@ message ExecutorLog {
 
   // OPTIONAL
   //
-  // Stdout tail.
   // This is not guaranteed to be the entire log.
-  // Implementations determine the maximum size.
+  // Implementations determine the maximum size and content.
   string stdout = 4;
 
   // OPTIONAL
   //
-  // Stderr tail.
   // This is not guaranteed to be the entire log.
-  // Implementations determine the maximum size.
+  // Implementations determine the maximum size and content.
   string stderr = 5;
 
   // REQUIRED
@@ -316,9 +288,6 @@ enum State {
   QUEUED = 1;
   INITIALIZING = 2;
   RUNNING = 3;
-  // An implementation *may* have the ability to pause a task,
-  // but this is not required.
-  PAUSED = 4;
   COMPLETE = 5;
   ERROR = 6;
   SYSTEM_ERROR = 7;
@@ -351,17 +320,18 @@ message GetTaskRequest {
 
 // ListTasksRequest describes a request to the ListTasks service endpoint.
 message ListTasksRequest {
+  
+  // OPTIONAL
+  // 
+  // Filter the list to include tasks with this state.
+  // If unspecified, no task filtering is done.
+  State state = 1;
 
   // OPTIONAL
   //
-  // Filter the task list to include tasks in this project.
-  string project = 1;
-
-  // OPTIONAL
-  //
-  // Filter the list to include tasks where the name matches this prefix.
-  // If unspecified, no task name filtering is done.
-  string name_prefix	= 2;
+  // Filter the list to include tasks with these tags.
+  // If unspecified, no task filtering is done.
+  map<string, string> tags	= 2;
 
   // OPTIONAL
   //
@@ -451,15 +421,6 @@ message ServiceInfo {
 
   // Returns a documentation string, e.g. "Hey, we're OHSU Comp. Bio!".
   string doc = 2;
-
-  // Lists some, but not necessarily all, storage locations supported by the service.
-  //
-  // Must be in a valid URL format.
-  // e.g. 
-  // file:///path/to/local/funnel-storage
-  // s3://ohsu-compbio-funnel/storage
-  // etc.
-  repeated string storage = 3;
 }
 
 // TaskService describes the HTTP/gRPC service API provided by TES
